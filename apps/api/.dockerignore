@@ -1,0 +1,7 @@
+.pytest_cache
+__pycache__
+*.pyc
+*.db
+*.log
+infersight_api.egg-info
+

@@ -1,0 +1,145 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+  --color-ink: 23 33 31;
+  --color-moss: 80 104 95;
+  --color-signal: 15 143 127;
+  --color-amberline: 217 150 50;
+  --color-paper: 246 245 239;
+  --color-card: 255 255 255;
+  background: rgb(var(--color-paper));
+  color: rgb(var(--color-ink));
+}
+
+.dark {
+  color-scheme: dark;
+  --color-ink: 229 238 234;
+  --color-moss: 148 166 159;
+  --color-signal: 56 211 184;
+  --color-amberline: 245 176 65;
+  --color-paper: 9 13 15;
+  --color-card: 17 24 27;
+  background: rgb(var(--color-paper));
+  color: rgb(var(--color-ink));
+}
+
+body {
+  margin: 0;
+  background:
+    radial-gradient(circle at top left, rgb(var(--color-signal) / 0.08), transparent 34rem),
+    rgb(var(--color-paper));
+  color: rgb(var(--color-ink));
+  text-rendering: geometricPrecision;
+}
+
+button, input, textarea, select {
+  font: inherit;
+}
+
+.focus-ring {
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+}
+
+.focus-ring:focus-visible {
+  outline-color: rgb(var(--color-signal));
+}
+
+::selection {
+  background: rgb(var(--color-signal) / 0.22);
+}
+
+* {
+  scrollbar-color: rgb(var(--color-ink) / 0.35) transparent;
+}
+
+.surface-card {
+  @apply rounded-xl border border-black/10 bg-card shadow-sm transition-all duration-200;
+}
+
+.surface-card:hover {
+  @apply shadow-md;
+}
+
+.page-enter {
+  animation: page-enter 240ms ease-out both;
+}
+
+.typing-dot {
+  animation: typing-pulse 1s ease-in-out infinite;
+}
+
+.dark .border-black\/5 {
+  border-color: rgb(255 255 255 / 0.06);
+}
+
+.dark .border-black\/10 {
+  border-color: rgb(255 255 255 / 0.1);
+}
+
+.dark .border-black\/15 {
+  border-color: rgb(255 255 255 / 0.16);
+}
+
+.dark .bg-white {
+  background-color: rgb(var(--color-card));
+}
+
+.dark .bg-white\/70 {
+  background-color: rgb(var(--color-card) / 0.7);
+}
+
+.dark .bg-white\/80 {
+  background-color: rgb(var(--color-card) / 0.8);
+}
+
+.dark .bg-white\/95 {
+  background-color: rgb(var(--color-card) / 0.95);
+}
+
+.dark .bg-black\/\[0\.04\] {
+  background-color: rgb(255 255 255 / 0.08);
+}
+
+.dark .shadow-sm,
+.dark .shadow,
+.dark .shadow-md {
+  box-shadow: 0 12px 30px -22px rgb(0 0 0 / 0.9);
+}
+
+.dark input,
+.dark textarea,
+.dark select {
+  background-color: rgb(var(--color-card));
+  color: rgb(var(--color-ink));
+}
+
+.dark input::placeholder,
+.dark textarea::placeholder {
+  color: rgb(var(--color-ink) / 0.42);
+}
+
+@keyframes page-enter {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes typing-pulse {
+  0%, 100% {
+    opacity: 0.35;
+    transform: translateY(0);
+  }
+  50% {
+    opacity: 1;
+    transform: translateY(-2px);
+  }
+}

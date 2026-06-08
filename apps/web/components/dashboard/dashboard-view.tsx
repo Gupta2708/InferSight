@@ -1,0 +1,185 @@
+"use client";
+
+import { useEffect, useMemo, useState, type ReactElement } from "react";
+import { Bar, BarChart, CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { api } from "@/lib/api";
+import { money, ms, percent } from "@/lib/formatters";
+import type { LogRow } from "@/lib/types";
+import { ActivityIcon, DatabaseIcon, PlugIcon, StopIcon, TraceIcon } from "@/components/ui/icons";
+
+type Summary = {
+  total_requests: number;
+  average_latency_ms: number;
+  p50_latency_ms: number;
+  p95_latency_ms: number;
+  error_rate: number;
+  cancellation_rate: number;
+  total_tokens: number;
+  estimated_cost: number;
+};
+
+type ProviderRow = {
+  label: string;
+  requests: number;
+  average_latency_ms: number;
+  estimated_cost: number;
+};
+
+export function DashboardView() {
+  const [summary, setSummary] = useState<Summary | null>(null);
+  const [latency, setLatency] = useState<Record<string, unknown>[]>([]);
+  const [providers, setProviders] = useState<ProviderRow[]>([]);
+  const [logs, setLogs] = useState<LogRow[]>([]);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    Promise.all([
+      api<Summary>("/api/dashboard/summary"),
+      api<Record<string, unknown>[]>("/api/dashboard/latency"),
+      api<ProviderRow[]>("/api/dashboard/providers"),
+      api<LogRow[]>("/api/logs")
+    ])
+      .then(([summaryData, latencyData, providerData, logData]) => {
+        setSummary(summaryData);
+        setLatency(latencyData);
+        setProviders(providerData);
+        setLogs(logData);
+      })
+      .catch((err) => setError(err instanceof Error ? err.message : "Failed to load dashboard"));
+  }, []);
+
+  const statusData = useMemo(() => {
+    const grouped = { completed: 0, error: 0, cancelled: 0 };
+    logs.forEach((log) => {
+      if (log.status in grouped) grouped[log.status as keyof typeof grouped] += 1;
+    });
+    return Object.entries(grouped).map(([status, count]) => ({ status, count }));
+  }, [logs]);
+
+  const tokenData = useMemo(() => {
+    const grouped = new Map<string, number>();
+    logs.forEach((log) => {
+      const bucket = new Date(log.created_at).toISOString().slice(0, 10);
+      grouped.set(bucket, (grouped.get(bucket) || 0) + log.total_tokens);
+    });
+    return [...grouped.entries()].sort().map(([bucket, value]) => ({ bucket, value }));
+  }, [logs]);
+
+  return (
+    <main className="page-enter mx-auto max-w-7xl px-4 py-6">
+      <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <p className="text-sm font-medium uppercase tracking-wide text-signal">Observability overview</p>
+          <h1 className="mt-1 text-2xl font-semibold">Dashboard</h1>
+          <p className="mt-1 text-sm text-ink/55">Latency, cost, usage, errors, and cancellation health from real inference logs.</p>
+        </div>
+      </div>
+
+      {error && <div className="mb-4 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">{error}</div>}
+
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <Metric icon={<DatabaseIcon className="h-5 w-5" />} label="Total requests" value={summary?.total_requests ?? 0} hint="Gateway calls observed" tone="info" />
+        <Metric icon={<ActivityIcon className="h-5 w-5" />} label="Average latency" value={ms(summary?.average_latency_ms)} hint="Mean request duration" tone="neutral" />
+        <Metric icon={<TraceIcon className="h-5 w-5" />} label="P95 latency" value={ms(summary?.p95_latency_ms)} hint="Tail latency signal" tone={(summary?.p95_latency_ms ?? 0) > 1000 ? "danger" : "neutral"} />
+        <Metric icon={<PlugIcon className="h-5 w-5" />} label="Estimated cost" value={money(summary?.estimated_cost ?? 0)} hint="Provider cost estimate" tone="neutral" />
+        <Metric icon={<ActivityIcon className="h-5 w-5" />} label="Error rate" value={percent(summary?.error_rate)} hint="Provider or request failures" tone={(summary?.error_rate ?? 0) > 0.1 ? "danger" : (summary?.error_rate ?? 0) > 0 ? "warning" : "success"} />
+        <Metric icon={<StopIcon className="h-5 w-5" />} label="Cancel rate" value={percent(summary?.cancellation_rate)} hint="User-stopped streams" tone={(summary?.cancellation_rate ?? 0) > 0 ? "warning" : "success"} />
+        <Metric icon={<DatabaseIcon className="h-5 w-5" />} label="Total tokens" value={summary?.total_tokens ?? 0} hint="Input plus output tokens" tone="info" />
+        <Metric icon={<ActivityIcon className="h-5 w-5" />} label="P50 latency" value={ms(summary?.p50_latency_ms)} hint="Median request duration" tone="neutral" />
+      </div>
+
+      <div className="mt-6 grid gap-5 xl:grid-cols-2">
+        <Chart title="Latency over time" subtitle="Average latency by day" empty={!latency.length}>
+          <LineChart data={latency}>
+            <CartesianGrid strokeDasharray="3 3" stroke="#d9d6cb" />
+            <XAxis dataKey="bucket" tick={{ fontSize: 12 }} />
+            <YAxis tick={{ fontSize: 12 }} width={44} />
+            <Tooltip />
+            <Line type="monotone" dataKey="value" stroke="#0f8f7f" strokeWidth={3} dot={{ r: 4 }} />
+          </LineChart>
+        </Chart>
+        <Chart title="Provider/model usage split" subtitle="Requests by configured target" empty={!providers.length}>
+          <BarChart data={providers} barCategoryGap="32%">
+            <CartesianGrid strokeDasharray="3 3" stroke="#d9d6cb" />
+            <XAxis dataKey="label" tick={{ fontSize: 12 }} interval={0} />
+            <YAxis tick={{ fontSize: 12 }} allowDecimals={false} width={36} />
+            <Tooltip />
+            <Bar dataKey="requests" fill="#0f8f7f" radius={[6, 6, 0, 0]} maxBarSize={80} />
+          </BarChart>
+        </Chart>
+        <Chart title="Status distribution" subtitle="Completed, failed, and cancelled requests" empty={!logs.length}>
+          <BarChart data={statusData} barCategoryGap="40%">
+            <CartesianGrid strokeDasharray="3 3" stroke="#d9d6cb" />
+            <XAxis dataKey="status" tick={{ fontSize: 12 }} />
+            <YAxis tick={{ fontSize: 12 }} allowDecimals={false} width={36} />
+            <Tooltip />
+            <Bar dataKey="count" fill="#d99632" radius={[6, 6, 0, 0]} maxBarSize={90} />
+          </BarChart>
+        </Chart>
+        <Chart title="Token usage" subtitle="Daily token volume from logs" empty={!tokenData.length}>
+          <LineChart data={tokenData}>
+            <CartesianGrid strokeDasharray="3 3" stroke="#d9d6cb" />
+            <XAxis dataKey="bucket" tick={{ fontSize: 12 }} />
+            <YAxis tick={{ fontSize: 12 }} width={44} />
+            <Tooltip />
+            <Line type="monotone" dataKey="value" stroke="#d99632" strokeWidth={3} dot={{ r: 4 }} />
+          </LineChart>
+        </Chart>
+      </div>
+    </main>
+  );
+}
+
+function Metric({
+  icon,
+  label,
+  value,
+  hint,
+  tone
+}: {
+  icon: ReactElement;
+  label: string;
+  value: string | number;
+  hint: string;
+  tone: "success" | "warning" | "danger" | "info" | "neutral";
+}) {
+  const toneClasses = {
+    success: "bg-emerald-50 text-emerald-700",
+    warning: "bg-amber-50 text-amber-700",
+    danger: "bg-red-50 text-red-700",
+    info: "bg-signal/10 text-signal",
+    neutral: "bg-black/[0.04] text-ink/60"
+  };
+  return (
+    <div className="surface-card p-5 hover:-translate-y-0.5">
+      <div className="flex items-start justify-between gap-3">
+        <div className={`grid h-10 w-10 place-items-center rounded-xl ${toneClasses[tone]}`}>{icon}</div>
+        <div className="text-right text-xs uppercase text-ink/45">{label}</div>
+      </div>
+      <div className="mt-4 text-3xl font-semibold tracking-normal">{value}</div>
+      <div className="mt-1 text-sm text-ink/50">{hint}</div>
+    </div>
+  );
+}
+
+function Chart({ title, subtitle, empty, children }: { title: string; subtitle: string; empty: boolean; children: ReactElement }) {
+  return (
+    <section className="surface-card p-5">
+      <div className="mb-4">
+        <h2 className="font-semibold">{title}</h2>
+        <p className="mt-1 text-sm text-ink/50">{subtitle}</p>
+      </div>
+      <div className="h-80">
+        {empty ? (
+          <div className="grid h-full place-items-center rounded-xl border border-dashed border-black/10 bg-paper/60 p-6 text-center text-sm text-ink/55">
+            No inference data yet. Send a chat message to populate this chart.
+          </div>
+        ) : (
+          <ResponsiveContainer width="100%" height="100%">
+            {children}
+          </ResponsiveContainer>
+        )}
+      </div>
+    </section>
+  );
+}
