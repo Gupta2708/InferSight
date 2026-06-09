@@ -13,7 +13,7 @@ from app.observability.logger import ObservabilityLogger
 from app.services.conversation_service import ConversationService
 
 
-SYSTEM_PROMPT = "You are a concise, helpful assistant inside InferSight demo traffic."
+SYSTEM_PROMPT = "You are a concise, helpful assistant inside InferLens demo traffic."
 
 
 class ChatService:
@@ -21,7 +21,7 @@ class ChatService:
         self.db = db
         self.settings = get_settings()
         self.conversations = ConversationService(db)
-        self.gateway = LLMGateway()
+        self.gateway = LLMGateway(db)
 
     async def stream_message(
         self,

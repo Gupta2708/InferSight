@@ -4,9 +4,10 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
 import clsx from "clsx";
 import { api } from "@/lib/api";
+import { getModelsForProvider, getDefaultModelForProvider, isValidProviderModel } from "@/lib/providers";
 import { compactDate } from "@/lib/formatters";
 import { streamConversationMessage } from "@/lib/stream";
-import type { Conversation, Message, ProviderModel } from "@/lib/types";
+import type { Conversation, Message, ProviderCatalog, ProviderModel } from "@/lib/types";
 import { Badge, StatusChip, StatusDot } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { MessageIcon, SendIcon, SparkIcon, StopIcon, TraceIcon, TrashIcon } from "@/components/ui/icons";
@@ -37,14 +38,27 @@ export function ChatConsole() {
   }
 
   useEffect(() => {
-    api<{ models: ProviderModel[] }>("/api/providers").then((data) => setModels(data.models));
+    api<ProviderCatalog>("/api/providers")
+      .then((data) => {
+        setModels(data.models);
+        const providers = [...new Set(data.models.filter((m) => m.enabled).map((m) => m.provider))];
+        const currentProvider = providers.includes(provider) ? provider : providers[0] || provider;
+        const defaultModel = getDefaultModelForProvider(data.models, currentProvider) || model;
+        setProvider(currentProvider);
+        setModel(defaultModel);
+      })
+      .catch((err) => setError(err instanceof Error ? err.message : "Failed to load providers"));
     refresh();
   }, []);
 
-  const providerModels = useMemo(
-    () => models.filter((item) => item.provider === provider),
-    [models, provider]
-  );
+  const providerModels = useMemo(() => getModelsForProvider(models, provider), [models, provider]);
+
+  useEffect(() => {
+    if (!models.length) return;
+    if (!isValidProviderModel(models, provider, model)) {
+      setModel(getDefaultModelForProvider(models, provider));
+    }
+  }, [models, provider, model]);
 
   const visibleConversations = useMemo(() => {
     if (!active) return conversations;
@@ -140,7 +154,7 @@ export function ChatConsole() {
         (event) => {
           if (event.event === "token") setStreamingText((current) => current + (event.delta || ""));
           if (event.event === "error" || event.event === "cancelled") {
-            setError(event.message || event.error_type || "Streaming failed");
+            setError(formatProviderError(event.error_type, event.message));
           }
         }
       );
@@ -220,13 +234,31 @@ export function ChatConsole() {
       <section className="surface-card flex min-h-0 min-w-0 flex-col overflow-hidden">
         <div className="flex flex-wrap items-end gap-3 border-b border-black/10 bg-card/90 p-4">
           <Control label="Provider">
-            <select className="rounded-md border border-black/15 bg-white px-3 py-2 text-sm shadow-sm transition focus:border-signal focus:outline-none" value={provider} onChange={(e) => setProvider(e.target.value)}>
-              {[...new Set(models.map((item) => item.provider))].map((item) => <option key={item}>{item}</option>)}
+            <select
+              className="rounded-md border border-black/15 bg-white px-3 py-2 text-sm shadow-sm transition focus:border-signal focus:outline-none"
+              value={provider}
+              onChange={(e) => {
+                const nextProvider = e.target.value;
+                setProvider(nextProvider);
+                // reset model to default for selected provider
+                const defaultModel = getDefaultModelForProvider(models, nextProvider);
+                setModel(defaultModel || "");
+              }}
+            >
+              {[...new Set(models.map((item) => item.provider))].map((item) => (
+                <option key={item}>{item}</option>
+              ))}
             </select>
           </Control>
           <Control label="Model">
-            <select className="rounded-md border border-black/15 bg-white px-3 py-2 text-sm shadow-sm transition focus:border-signal focus:outline-none" value={model} onChange={(e) => setModel(e.target.value)}>
-              {providerModels.map((item) => <option key={item.model}>{item.model}</option>)}
+            <select
+              className="rounded-md border border-black/15 bg-white px-3 py-2 text-sm shadow-sm transition focus:border-signal focus:outline-none"
+              value={model}
+              onChange={(e) => setModel(e.target.value)}
+            >
+              {providerModels.map((item) => (
+                <option key={item.model}>{item.model}</option>
+              ))}
             </select>
           </Control>
           <Control label="Mock scenario">
@@ -295,6 +327,13 @@ export function ChatConsole() {
       </section>
     </main>
   );
+}
+
+function formatProviderError(errorType?: string, message?: string) {
+  if (errorType === "provider_auth_error" || errorType === "provider_invalid_model") {
+    return "Provider model unavailable. Check API key/model config.";
+  }
+  return message || errorType || "Streaming failed";
 }
 
 function Control({ label, children }: { label: string; children: ReactNode }) {

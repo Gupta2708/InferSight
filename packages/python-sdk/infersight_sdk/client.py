@@ -1,7 +1,7 @@
 import httpx
 
 
-class InferSightClient:
+class InferLensClient:
     def __init__(self, base_url: str = "http://localhost:8000"):
         self.base_url = base_url.rstrip("/")
 
@@ -10,3 +10,5 @@ class InferSightClient:
         response.raise_for_status()
         return response.json()
 
+
+InferSightClient = InferLensClient

@@ -3,17 +3,21 @@
 import { useEffect, useState } from "react";
 import { api } from "@/lib/api";
 import { money } from "@/lib/formatters";
-import type { ProviderModel } from "@/lib/types";
+import type { ProviderCatalog, ProviderModel } from "@/lib/types";
 import { ModelChip, ProviderChip, StatusChip } from "@/components/ui/badge";
 import { PlugIcon } from "@/components/ui/icons";
 
 export default function ProvidersPage() {
   const [models, setModels] = useState<ProviderModel[]>([]);
+  const [mockMode, setMockMode] = useState(false);
   const [error, setError] = useState("");
 
   useEffect(() => {
-    api<ProviderModel[]>("/api/providers/models")
-      .then(setModels)
+    api<ProviderCatalog>("/api/providers")
+      .then((data) => {
+        setModels(data.models);
+        setMockMode(data.mock_mode);
+      })
       .catch((err) => setError(err instanceof Error ? err.message : "Failed to load providers"));
   }, []);
 
@@ -29,7 +33,7 @@ export default function ProvidersPage() {
 
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         {models.map((item) => {
-          const needsKey = !item.enabled && item.provider !== "mock";
+          const needsKey = !item.key_configured && item.provider !== "mock";
           return (
             <article key={`${item.provider}-${item.model}`} className="surface-card p-5 hover:-translate-y-0.5">
               <div className="flex items-start justify-between gap-3">
@@ -44,12 +48,14 @@ export default function ProvidersPage() {
                     </div>
                   </div>
                 </div>
-                <StatusChip status={needsKey ? "needs key" : "enabled"} />
+                <StatusChip status={needsKey ? "needs key" : item.provider === "mock" && mockMode ? "mock mode" : "configured"} />
               </div>
 
               <div className="mt-5 grid grid-cols-2 gap-3 text-sm">
                 <ProviderMetric label="Streaming" value={item.supports_streaming ? "supported" : "not supported"} />
                 <ProviderMetric label="Key status" value={needsKey ? "needs key" : item.provider === "mock" ? "mock mode" : "configured"} />
+                <ProviderMetric label="Selection" value={item.available ? "available" : item.status_label} />
+                <ProviderMetric label="Model status" value="model configurable" />
                 <ProviderMetric label="Input / 1k" value={formatRate(item.input_cost_per_1k_tokens)} />
                 <ProviderMetric label="Output / 1k" value={formatRate(item.output_cost_per_1k_tokens)} />
               </div>

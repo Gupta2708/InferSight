@@ -27,9 +27,18 @@ export type ProviderModel = {
   provider: string;
   model: string;
   enabled: boolean;
+  key_configured: boolean;
+  available: boolean;
+  status_label: string;
   supports_streaming: boolean;
   input_cost_per_1k_tokens?: number | null;
   output_cost_per_1k_tokens?: number | null;
+};
+
+export type ProviderCatalog = {
+  providers: string[];
+  models: ProviderModel[];
+  mock_mode: boolean;
 };
 
 export type LogRow = {

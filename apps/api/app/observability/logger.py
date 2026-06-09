@@ -7,10 +7,12 @@ from sqlalchemy.orm import Session
 
 from app.llm.base import LLMRequest, LLMResponse
 from app.llm.cost import estimate_cost
+from app.llm.errors import sanitize_error_message
 from app.observability.metadata import preview, safe_metadata
 from app.observability.spans import SpanRecord
 from app.observability.trace import new_trace_id
 from app.services.ingestion_service import IngestionService
+from app.config import get_settings
 
 
 class ObservabilityLogger:
@@ -82,6 +84,14 @@ class ObservabilityLogger:
         if status in {"completed", "cancelled"}:
             self.span("stream_completed" if self.request.stream else "completed", status=status)
         self.span("log_emitted", status=status)
+        # redact API keys from error messages before persisting
+        if error_message:
+            settings = get_settings()
+            for key in (settings.openai_api_key, settings.gemini_api_key):
+                if key and key in error_message:
+                    error_message = error_message.replace(key, "[REDACTED]")
+            error_message = sanitize_error_message(error_message)
+
         event = {
             "event_id": f"evt_{uuid.uuid4().hex}",
             "trace_id": self.trace_id,

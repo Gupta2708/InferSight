@@ -21,7 +21,15 @@ export async function streamConversationMessage(
     body: JSON.stringify(body)
   });
   if (!response.ok || !response.body) {
-    throw new Error(await response.text());
+    let message = "Request failed";
+    const contentType = response.headers.get("content-type") || "";
+    if (contentType.includes("application/json")) {
+      const payload = await response.json().catch(() => null);
+      if (typeof payload?.detail === "string") message = payload.detail;
+    } else {
+      message = (await response.text()) || message;
+    }
+    throw new Error(message);
   }
   const reader = response.body.getReader();
   const decoder = new TextDecoder();
@@ -38,4 +46,3 @@ export async function streamConversationMessage(
   }
   if (buffer.trim()) onEvent(JSON.parse(buffer));
 }
-

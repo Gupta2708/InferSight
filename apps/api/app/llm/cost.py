@@ -3,9 +3,12 @@ PRICING = {
     ("mock", "mock-slow"): (0.0, 0.0),
     ("openai", "gpt-4.1-mini"): (0.0004, 0.0016),
     ("openai", "gpt-4o-mini"): (0.00015, 0.0006),
-    ("gemini", "gemini-flash"): (0.000075, 0.0003),
-    ("gemini", "gemini-1.5-flash"): (0.000075, 0.0003),
-    ("gemini", "gemini-2.0-flash"): (0.0001, 0.0004),
+    ("gemini", "gemini-flash"): (0.0003, 0.0025),
+    ("gemini", "gemini-flash-latest"): (0.0003, 0.0025),
+    ("gemini", "gemini-1.5-flash"): (0.0003, 0.0025),
+    ("gemini", "gemini-2.0-flash"): (0.0003, 0.0025),
+    ("gemini", "gemini-2.0-flash-001"): (0.0003, 0.0025),
+    ("gemini", "gemini-2.5-flash"): (0.0003, 0.0025),
 }
 
 

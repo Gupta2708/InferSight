@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { api } from "@/lib/api";
 import { money, ms } from "@/lib/formatters";
+import { getDefaultModelForProvider, getModelsForProvider } from "@/lib/providers";
+import type { ProviderCatalog, ProviderModel } from "@/lib/types";
 import { Badge, ModelChip, ProviderChip, StatusChip } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { CompareIcon, PlayIcon, TraceIcon } from "@/components/ui/icons";
@@ -29,19 +31,52 @@ type Run = {
   results: Result[];
 };
 
-const targets = [
-  { provider: "mock", model: "mock-fast" },
-  { provider: "mock", model: "mock-slow" },
-  { provider: "mock", model: "mock-error" }
-];
+type TargetSelection = {
+  provider: string;
+  model: string;
+  selected: boolean;
+};
 
 export function ComparisonView() {
   const [prompt, setPrompt] = useState("Summarize why LLM observability matters.");
+  const [models, setModels] = useState<ProviderModel[]>([]);
+  const [targets, setTargets] = useState<TargetSelection[]>([]);
+  const [mockMode, setMockMode] = useState(false);
   const [run, setRun] = useState<Run | null>(null);
   const [running, setRunning] = useState(false);
   const [error, setError] = useState("");
 
+  useEffect(() => {
+    api<ProviderCatalog>("/api/providers")
+      .then((data) => {
+        setModels(data.models);
+        setMockMode(data.mock_mode);
+        setTargets(
+          data.providers.map((provider) => {
+            const providerRows = getModelsForProvider(data.models, provider);
+            const firstModel = getDefaultModelForProvider(data.models, provider);
+            const available = providerRows.some((row) => row.available);
+            return {
+              provider,
+              model: firstModel,
+              selected: provider === "mock" || available,
+            };
+          })
+        );
+      })
+      .catch((err) => setError(err instanceof Error ? err.message : "Failed to load providers"));
+  }, []);
+
+  const selectedTargets = useMemo(
+    () => targets.filter((target) => target.selected && target.model),
+    [targets]
+  );
+
   async function start() {
+    if (!selectedTargets.length) {
+      setError("Select at least one valid provider/model target.");
+      return;
+    }
     setRunning(true);
     setError("");
     try {
@@ -52,7 +87,10 @@ export function ComparisonView() {
           context_mode: "none",
           temperature: 0.7,
           max_tokens: 800,
-          targets
+          targets: selectedTargets.map((target) => ({
+            provider: target.provider,
+            model: target.model,
+          }))
         })
       });
       setRun(result);
@@ -87,14 +125,62 @@ export function ComparisonView() {
           />
         </label>
         <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
-          <div className="flex flex-wrap gap-2">
-            {targets.map((target) => (
-              <Badge key={`${target.provider}-${target.model}`} tone={target.model === "mock-error" ? "warning" : "info"}>
-                {target.provider}/{target.model}
-              </Badge>
-            ))}
+          <div className="grid flex-1 gap-2 sm:grid-cols-2 xl:grid-cols-3">
+            {targets.map((target) => {
+              const providerRows = getModelsForProvider(models, target.provider);
+              const providerMeta = providerRows[0];
+              return (
+                <label
+                  key={target.provider}
+                  className="flex items-center gap-3 rounded-xl border border-black/10 bg-paper/70 px-3 py-2 text-sm"
+                >
+                  <input
+                    checked={target.selected}
+                    className="h-4 w-4 accent-[rgb(var(--color-signal))]"
+                    onChange={(event) =>
+                      setTargets((current) =>
+                        current.map((item) =>
+                          item.provider === target.provider
+                            ? { ...item, selected: event.target.checked }
+                            : item
+                        )
+                      )
+                    }
+                    type="checkbox"
+                  />
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <ProviderChip provider={target.provider} />
+                      <Badge tone={providerMeta?.key_configured ? "success" : "warning"}>
+                        {providerMeta?.status_label || "configured"}
+                      </Badge>
+                      {mockMode && target.provider !== "mock" && <Badge>mock routed</Badge>}
+                    </div>
+                    <select
+                      className="mt-2 w-full rounded-md border border-black/15 bg-white px-3 py-2 text-sm shadow-sm transition focus:border-signal focus:outline-none"
+                      value={target.model}
+                      onChange={(event) =>
+                        setTargets((current) =>
+                          current.map((item) =>
+                            item.provider === target.provider
+                              ? { ...item, model: event.target.value }
+                              : item
+                          )
+                        )
+                      }
+                    >
+                      {providerRows.map((row) => (
+                        <option key={row.model} value={row.model}>
+                          {row.model}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </label>
+              );
+            })}
           </div>
-          <Button onClick={start} disabled={running || !prompt.trim()}>
+          <Button onClick={start} disabled={running || !prompt.trim() || !selectedTargets.length}>
             <PlayIcon className="h-4 w-4" />
             {running ? "Running comparison" : "Run Comparison"}
           </Button>

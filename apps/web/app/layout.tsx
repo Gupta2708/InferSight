@@ -4,7 +4,7 @@ import { AppNav } from "@/components/layout/app-nav";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "InferSight",
+  title: "InferLens",
   description: "LLM gateway and inference observability platform"
 };
 
@@ -25,9 +25,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <div className="mx-auto flex max-w-7xl flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
               <Link href="/chat" className="group inline-flex items-center gap-3 text-lg font-semibold tracking-normal text-ink">
                 <span className="grid h-9 w-9 place-items-center rounded-xl bg-[#13211f] text-sm text-white shadow-sm transition-transform group-hover:-translate-y-0.5 dark:bg-signal dark:text-[#07100f]">
-                  IS
+                  IL
                 </span>
-                <span>InferSight</span>
+                <span>InferLens</span>
               </Link>
               <AppNav />
             </div>

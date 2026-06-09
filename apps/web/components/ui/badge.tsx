@@ -92,6 +92,7 @@ export function ModelChip({ model, className }: { model?: string | null; classNa
 export function statusTone(status?: string | null): BadgeTone {
   if (status === "completed" || status === "enabled") return "success";
   if (status === "active") return "info";
+  if (status === "configured" || status === "mock mode") return "info";
   if (status === "cancelled" || status === "streaming" || status === "pending" || status === "needs key") return "warning";
   if (status === "error" || status === "failed") return "error";
   return "neutral";

@@ -4,7 +4,13 @@ import httpx
 
 from app.config import get_settings
 from app.llm.base import LLMChunk, LLMRequest, LLMResponse
-from app.llm.errors import ProviderAuthError, ProviderRateLimitError, ProviderServerError
+from app.llm.errors import (
+    InvalidRequestError,
+    ProviderAuthError,
+    ProviderModelNotFoundError,
+    ProviderRateLimitError,
+    ProviderServerError,
+)
 
 
 class OpenAIProvider:
@@ -16,28 +22,37 @@ class OpenAIProvider:
             raise ProviderAuthError("OPENAI_API_KEY is not configured")
         payload = {
             "model": request.model,
-            "messages": [{"role": m.role, "content": m.content} for m in request.messages],
+            "input": [
+                {
+                    "role": message.role,
+                    "content": [{"type": "input_text", "text": message.content}],
+                }
+                for message in request.messages
+            ],
             "temperature": request.temperature,
-            "max_tokens": request.max_tokens,
+            "max_output_tokens": request.max_tokens,
         }
-        async with httpx.AsyncClient(timeout=60) as client:
-            response = await client.post(
-                "https://api.openai.com/v1/chat/completions",
-                headers={"Authorization": f"Bearer {settings.openai_api_key}"},
-                json=payload,
-            )
+        try:
+            async with httpx.AsyncClient(timeout=60) as client:
+                response = await client.post(
+                    "https://api.openai.com/v1/responses",
+                    headers={"Authorization": f"Bearer {settings.openai_api_key}"},
+                    json=payload,
+                )
+        except httpx.HTTPError as exc:
+            raise ProviderServerError("OpenAI request failed. Check network or provider status.") from exc
         self._raise_for_status(response)
         data = response.json()
-        content = data["choices"][0]["message"]["content"]
+        content = data.get("output_text") or self._extract_output_text(data)
         usage = data.get("usage", {})
         return LLMResponse(
             content=content,
             provider="openai",
             model=request.model,
-            input_tokens=usage.get("prompt_tokens", 0),
-            output_tokens=usage.get("completion_tokens", 0),
+            input_tokens=usage.get("input_tokens", 0),
+            output_tokens=usage.get("output_tokens", 0),
             total_tokens=usage.get("total_tokens", 0),
-            safe_metadata={"finish_reason": data["choices"][0].get("finish_reason")},
+            safe_metadata={"response_id": data.get("id"), "status": data.get("status")},
         )
 
     async def stream(self, request: LLMRequest) -> AsyncIterator[LLMChunk]:
@@ -46,11 +61,26 @@ class OpenAIProvider:
             yield LLMChunk(delta=token + " ", sequence_number=index + 1)
 
     def _raise_for_status(self, response: httpx.Response) -> None:
-        if response.status_code == 401:
+        if response.status_code in {401, 403}:
             raise ProviderAuthError("OpenAI authentication failed")
         if response.status_code == 429:
             raise ProviderRateLimitError("OpenAI rate limit exceeded")
+        if response.status_code == 404:
+            raise ProviderModelNotFoundError(
+                "OpenAI model not found or not available to this API key/project."
+            )
+        if response.status_code == 400:
+            raise InvalidRequestError("OpenAI request rejected. Check model and request settings.")
         if response.status_code >= 500:
             raise ProviderServerError(f"OpenAI server error: {response.status_code}")
-        response.raise_for_status()
+        if response.status_code >= 400:
+            raise ProviderServerError("OpenAI request failed.")
 
+    def _extract_output_text(self, data: dict) -> str:
+        parts: list[str] = []
+        for item in data.get("output", []):
+            for content in item.get("content", []):
+                text = content.get("text")
+                if isinstance(text, str):
+                    parts.append(text)
+        return "".join(parts)

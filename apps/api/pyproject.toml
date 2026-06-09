@@ -1,7 +1,7 @@
 [project]
-name = "infersight-api"
+name = "inferlens-api"
 version = "0.1.0"
-description = "FastAPI backend for InferSight"
+description = "FastAPI backend for InferLens"
 requires-python = ">=3.11"
 dependencies = [
   "alembic>=1.13.2",

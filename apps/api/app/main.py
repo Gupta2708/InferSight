@@ -16,7 +16,7 @@ async def lifespan(_: FastAPI):
     yield
 
 
-app = FastAPI(title="InferSight API", version="0.1.0", lifespan=lifespan)
+app = FastAPI(title="InferLens API", version="0.1.0", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
