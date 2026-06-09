@@ -162,10 +162,10 @@ function Metric({
     <div className={`metric-card metric-${tone}`}>
       <div className="flex items-start justify-between gap-3">
         <div className="metric-icon">{icon}</div>
-        <div className="text-right text-xs uppercase text-ink/45">{label}</div>
+        <div className="metric-label">{label}</div>
       </div>
       <div className="mt-4 text-3xl font-semibold tracking-normal">{value}</div>
-      <div className="mt-1 text-sm text-ink/50">{hint}</div>
+      <div className="metric-hint">{hint}</div>
     </div>
   );
 }

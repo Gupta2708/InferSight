@@ -107,6 +107,16 @@ button, input, textarea, select {
   box-shadow: 0 0 22px rgb(var(--metric-glow, var(--color-signal)) / 0.1);
 }
 
+.metric-label {
+  @apply text-right text-xs font-semibold uppercase;
+  color: rgb(var(--color-ink) / 0.62);
+}
+
+.metric-hint {
+  @apply mt-1 text-sm font-medium;
+  color: rgb(var(--color-ink) / 0.64);
+}
+
 .metric-success {
   --metric-glow: 16 185 129;
 }
@@ -180,11 +190,15 @@ button, input, textarea, select {
 }
 
 .logo-mark-shell {
-  @apply relative inline-flex h-12 w-12 items-center justify-center rounded-2xl border border-black/10 bg-card transition-all duration-300;
+  @apply relative inline-flex h-12 w-12 items-center justify-center rounded-2xl transition-all duration-300;
+  background:
+    radial-gradient(circle at 32% 26%, rgb(255 255 255 / 0.88), rgb(var(--color-signal) / 0.08) 44%, rgb(255 255 255 / 0.2) 72%),
+    rgb(var(--color-paper) / 0.56);
+  border: 1px solid rgb(var(--color-signal) / 0.16);
   box-shadow:
-    0 14px 34px -24px rgb(0 0 0 / 0.38),
-    0 0 0 1px rgb(255 255 255 / 0.18) inset,
-    0 0 26px rgb(var(--color-signal) / 0.2);
+    0 14px 34px -26px rgb(15 143 127 / 0.42),
+    0 0 0 1px rgb(255 255 255 / 0.5) inset,
+    0 0 24px rgb(var(--color-signal) / 0.16);
 }
 
 .logo-mark-shell::before {
@@ -192,9 +206,9 @@ button, input, textarea, select {
   position: absolute;
   inset: -0.45rem;
   border-radius: 1.35rem;
-  background: radial-gradient(circle, rgb(var(--color-signal) / 0.22), transparent 64%);
-  filter: blur(10px);
-  opacity: 0.72;
+  background: radial-gradient(circle, rgb(var(--color-signal) / 0.2), transparent 66%);
+  filter: blur(12px);
+  opacity: 0.56;
   transition: opacity 220ms ease, transform 220ms ease;
   z-index: -1;
 }
@@ -205,8 +219,8 @@ button, input, textarea, select {
   width: 2.45rem;
   object-fit: contain;
   filter:
-    drop-shadow(0 0 10px rgb(var(--color-signal) / 0.28))
-    drop-shadow(0 7px 14px rgb(0 0 0 / 0.14));
+    drop-shadow(0 0 9px rgb(var(--color-signal) / 0.3))
+    drop-shadow(0 6px 12px rgb(15 143 127 / 0.16));
   transition: transform 220ms ease, filter 220ms ease;
 }
 
@@ -233,7 +247,11 @@ button, input, textarea, select {
 
 .brand-link:hover .logo-mark-shell {
   transform: translateY(-1px);
-  border-color: rgb(var(--color-signal) / 0.28);
+  border-color: rgb(var(--color-signal) / 0.24);
+  box-shadow:
+    0 18px 38px -28px rgb(15 143 127 / 0.5),
+    0 0 0 1px rgb(255 255 255 / 0.6) inset,
+    0 0 30px rgb(var(--color-signal) / 0.22);
 }
 
 .brand-link:hover .logo-mark-shell::before {
@@ -349,6 +367,14 @@ button, input, textarea, select {
 .dark .dashboard-chart-card {
   background:
     linear-gradient(180deg, rgb(18 26 29 / 0.96), rgb(13 20 22 / 0.98));
+}
+
+.dark .metric-label {
+  color: rgb(var(--color-ink) / 0.72);
+}
+
+.dark .metric-hint {
+  color: rgb(var(--color-ink) / 0.68);
 }
 
 .dark .brand-link::before {
