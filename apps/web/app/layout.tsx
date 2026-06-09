@@ -30,10 +30,10 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           <header className="sticky top-0 z-30 border-b border-black/10 bg-paper/90 backdrop-blur">
             <div className="mx-auto flex max-w-7xl flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
               <Link href="/chat" className="brand-link group">
-                <span className="logo-wordmark-shell">
-                  <Image src="/inferlens-logo.svg" alt="InferLens" width={184} height={56} className="logo-wordmark-image" priority />
+                <span className="logo-mark-shell">
+                  <Image src="/inferlens-mark.svg" alt="InferLens mark" width={44} height={44} className="logo-mark-image" priority />
                 </span>
-                <span className="sm:hidden text-base font-semibold">InferLens</span>
+                <span className="brand-title">Infer<span>Lens</span></span>
               </Link>
               <AppNav />
             </div>

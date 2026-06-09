@@ -25,6 +25,21 @@ type ProviderRow = {
   estimated_cost: number;
 };
 
+const chartText = "rgb(var(--color-ink) / 0.55)";
+const chartGrid = "rgb(var(--color-ink) / 0.13)";
+const teal = "rgb(var(--color-signal))";
+const amber = "rgb(var(--color-amberline))";
+const tooltipStyle = {
+  backgroundColor: "rgb(var(--color-card) / 0.96)",
+  border: "1px solid rgb(var(--color-signal) / 0.22)",
+  borderRadius: "12px",
+  boxShadow: "0 18px 42px -28px rgb(0 0 0 / 0.7), 0 0 24px rgb(var(--color-signal) / 0.12)",
+  color: "rgb(var(--color-ink))"
+};
+const tooltipLabelStyle = { color: "rgb(var(--color-ink) / 0.72)", fontWeight: 600 };
+const tooltipItemStyle = { color: teal };
+const cursorStyle = { fill: "rgb(var(--color-signal) / 0.08)" };
+
 export function DashboardView() {
   const [summary, setSummary] = useState<Summary | null>(null);
   const [latency, setLatency] = useState<Record<string, unknown>[]>([]);
@@ -91,38 +106,38 @@ export function DashboardView() {
       <div className="mt-6 grid gap-5 xl:grid-cols-2">
         <Chart title="Latency over time" subtitle="Average latency by day" empty={!latency.length}>
           <LineChart data={latency}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#d9d6cb" />
-            <XAxis dataKey="bucket" tick={{ fontSize: 12 }} />
-            <YAxis tick={{ fontSize: 12 }} width={44} />
-            <Tooltip />
-            <Line type="monotone" dataKey="value" stroke="#0f8f7f" strokeWidth={3} dot={{ r: 4 }} />
+            <CartesianGrid strokeDasharray="4 6" stroke={chartGrid} vertical={false} />
+            <XAxis dataKey="bucket" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: chartText }} />
+            <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: chartText }} width={44} />
+            <Tooltip contentStyle={tooltipStyle} labelStyle={tooltipLabelStyle} itemStyle={tooltipItemStyle} cursor={{ stroke: teal, strokeOpacity: 0.28 }} />
+            <Line type="monotone" dataKey="value" stroke={teal} strokeWidth={3} dot={{ r: 5, strokeWidth: 3, fill: "rgb(var(--color-card))", stroke: teal }} activeDot={{ r: 7, strokeWidth: 3, fill: teal, stroke: "rgb(var(--color-card))" }} />
           </LineChart>
         </Chart>
         <Chart title="Provider/model usage split" subtitle="Requests by configured target" empty={!providers.length}>
           <BarChart data={providers} barCategoryGap="32%">
-            <CartesianGrid strokeDasharray="3 3" stroke="#d9d6cb" />
-            <XAxis dataKey="label" tick={{ fontSize: 12 }} interval={0} />
-            <YAxis tick={{ fontSize: 12 }} allowDecimals={false} width={36} />
-            <Tooltip />
-            <Bar dataKey="requests" fill="#0f8f7f" radius={[6, 6, 0, 0]} maxBarSize={80} />
+            <CartesianGrid strokeDasharray="4 6" stroke={chartGrid} vertical={false} />
+            <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: chartText }} interval={0} />
+            <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: chartText }} allowDecimals={false} width={36} />
+            <Tooltip contentStyle={tooltipStyle} labelStyle={tooltipLabelStyle} itemStyle={tooltipItemStyle} cursor={cursorStyle} />
+            <Bar dataKey="requests" fill={teal} radius={[8, 8, 2, 2]} maxBarSize={78} />
           </BarChart>
         </Chart>
         <Chart title="Status distribution" subtitle="Completed, failed, and cancelled requests" empty={!logs.length}>
           <BarChart data={statusData} barCategoryGap="40%">
-            <CartesianGrid strokeDasharray="3 3" stroke="#d9d6cb" />
-            <XAxis dataKey="status" tick={{ fontSize: 12 }} />
-            <YAxis tick={{ fontSize: 12 }} allowDecimals={false} width={36} />
-            <Tooltip />
-            <Bar dataKey="count" fill="#d99632" radius={[6, 6, 0, 0]} maxBarSize={90} />
+            <CartesianGrid strokeDasharray="4 6" stroke={chartGrid} vertical={false} />
+            <XAxis dataKey="status" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: chartText }} />
+            <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: chartText }} allowDecimals={false} width={36} />
+            <Tooltip contentStyle={tooltipStyle} labelStyle={tooltipLabelStyle} itemStyle={{ color: amber }} cursor={{ fill: "rgb(var(--color-amberline) / 0.08)" }} />
+            <Bar dataKey="count" fill={amber} radius={[8, 8, 2, 2]} maxBarSize={88} />
           </BarChart>
         </Chart>
         <Chart title="Token usage" subtitle="Daily token volume from logs" empty={!tokenData.length}>
           <LineChart data={tokenData}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#d9d6cb" />
-            <XAxis dataKey="bucket" tick={{ fontSize: 12 }} />
-            <YAxis tick={{ fontSize: 12 }} width={44} />
-            <Tooltip />
-            <Line type="monotone" dataKey="value" stroke="#d99632" strokeWidth={3} dot={{ r: 4 }} />
+            <CartesianGrid strokeDasharray="4 6" stroke={chartGrid} vertical={false} />
+            <XAxis dataKey="bucket" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: chartText }} />
+            <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: chartText }} width={44} />
+            <Tooltip contentStyle={tooltipStyle} labelStyle={tooltipLabelStyle} itemStyle={{ color: amber }} cursor={{ stroke: amber, strokeOpacity: 0.3 }} />
+            <Line type="monotone" dataKey="value" stroke={amber} strokeWidth={3} dot={{ r: 5, strokeWidth: 3, fill: "rgb(var(--color-card))", stroke: amber }} activeDot={{ r: 7, strokeWidth: 3, fill: amber, stroke: "rgb(var(--color-card))" }} />
           </LineChart>
         </Chart>
       </div>
@@ -143,17 +158,10 @@ function Metric({
   hint: string;
   tone: "success" | "warning" | "danger" | "info" | "neutral";
 }) {
-  const toneClasses = {
-    success: "bg-emerald-50 text-emerald-700",
-    warning: "bg-amber-50 text-amber-700",
-    danger: "bg-red-50 text-red-700",
-    info: "bg-signal/10 text-signal",
-    neutral: "bg-black/[0.04] text-ink/60"
-  };
   return (
-    <div className="surface-card p-5 hover:-translate-y-0.5">
+    <div className={`metric-card metric-${tone}`}>
       <div className="flex items-start justify-between gap-3">
-        <div className={`grid h-10 w-10 place-items-center rounded-xl ${toneClasses[tone]}`}>{icon}</div>
+        <div className="metric-icon">{icon}</div>
         <div className="text-right text-xs uppercase text-ink/45">{label}</div>
       </div>
       <div className="mt-4 text-3xl font-semibold tracking-normal">{value}</div>
@@ -164,7 +172,7 @@ function Metric({
 
 function Chart({ title, subtitle, empty, children }: { title: string; subtitle: string; empty: boolean; children: ReactElement }) {
   return (
-    <section className="surface-card p-5">
+    <section className="dashboard-chart-card">
       <div className="mb-4">
         <h2 className="font-semibold">{title}</h2>
         <p className="mt-1 text-sm text-ink/50">{subtitle}</p>

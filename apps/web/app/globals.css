@@ -64,53 +64,195 @@ button, input, textarea, select {
   @apply shadow-md;
 }
 
+.metric-card {
+  @apply relative overflow-hidden rounded-xl border border-black/10 bg-card p-5 shadow-sm transition-all duration-300;
+  box-shadow:
+    0 16px 42px -34px rgb(0 0 0 / 0.48),
+    0 0 0 1px rgb(255 255 255 / 0.08) inset;
+}
+
+.metric-card::before {
+  content: "";
+  position: absolute;
+  inset: -45% -20% auto auto;
+  width: 12rem;
+  height: 12rem;
+  border-radius: 999px;
+  background: rgb(var(--metric-glow, var(--color-signal)) / 0.13);
+  filter: blur(30px);
+  opacity: 0.75;
+  pointer-events: none;
+  transition: opacity 220ms ease, transform 220ms ease;
+}
+
+.metric-card:hover {
+  transform: translateY(-2px);
+  border-color: rgb(var(--metric-glow, var(--color-signal)) / 0.28);
+  box-shadow:
+    0 20px 50px -34px rgb(0 0 0 / 0.56),
+    0 0 0 1px rgb(var(--metric-glow, var(--color-signal)) / 0.14) inset,
+    0 0 32px rgb(var(--metric-glow, var(--color-signal)) / 0.08);
+}
+
+.metric-card:hover::before {
+  opacity: 1;
+  transform: scale(1.08);
+}
+
+.metric-icon {
+  @apply grid h-10 w-10 place-items-center rounded-xl border;
+  background: rgb(var(--metric-glow, var(--color-signal)) / 0.11);
+  border-color: rgb(var(--metric-glow, var(--color-signal)) / 0.16);
+  color: rgb(var(--metric-glow, var(--color-signal)));
+  box-shadow: 0 0 22px rgb(var(--metric-glow, var(--color-signal)) / 0.1);
+}
+
+.metric-success {
+  --metric-glow: 16 185 129;
+}
+
+.metric-warning {
+  --metric-glow: var(--color-amberline);
+}
+
+.metric-danger {
+  --metric-glow: 239 68 68;
+}
+
+.metric-info {
+  --metric-glow: var(--color-signal);
+}
+
+.metric-neutral {
+  --metric-glow: 148 166 159;
+}
+
+.dashboard-chart-card {
+  @apply relative overflow-hidden rounded-xl border border-black/10 bg-card p-5 shadow-sm transition-all duration-300;
+  box-shadow:
+    0 18px 50px -38px rgb(0 0 0 / 0.5),
+    0 0 0 1px rgb(255 255 255 / 0.06) inset;
+}
+
+.dashboard-chart-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(135deg, rgb(var(--color-signal) / 0.08), transparent 34%),
+    radial-gradient(circle at 85% 10%, rgb(var(--color-amberline) / 0.08), transparent 28rem);
+  opacity: 0.64;
+  pointer-events: none;
+}
+
+.dashboard-chart-card > * {
+  position: relative;
+  z-index: 1;
+}
+
+.dashboard-chart-card:hover {
+  transform: translateY(-1px);
+  border-color: rgb(var(--color-signal) / 0.2);
+  box-shadow:
+    0 22px 58px -40px rgb(0 0 0 / 0.58),
+    0 0 0 1px rgb(var(--color-signal) / 0.1) inset,
+    0 0 34px rgb(var(--color-signal) / 0.07);
+}
+
 .brand-link {
-  @apply relative inline-flex items-center text-lg font-semibold tracking-normal text-ink transition-all duration-300;
+  @apply relative inline-flex items-center gap-3 text-lg font-semibold tracking-normal text-ink transition-all duration-300;
   isolation: isolate;
 }
 
 .brand-link::before {
   content: "";
   position: absolute;
-  inset: -0.85rem -1.1rem;
+  inset: -0.7rem -1rem;
   border-radius: 999px;
   background:
-    radial-gradient(circle at 18% 48%, rgb(var(--color-signal) / 0.26), transparent 28%),
-    linear-gradient(90deg, rgb(var(--color-signal) / 0.1), transparent 70%);
-  opacity: 0.58;
-  filter: blur(18px);
+    radial-gradient(circle at 16% 50%, rgb(var(--color-signal) / 0.26), transparent 30%),
+    linear-gradient(90deg, rgb(var(--color-signal) / 0.11), transparent 68%);
+  opacity: 0.42;
+  filter: blur(16px);
   transform: scale(0.92);
   transition: opacity 220ms ease, transform 220ms ease;
   z-index: -1;
 }
 
-.logo-wordmark-shell {
-  position: relative;
-  align-items: center;
-  display: inline-flex;
-  border-radius: 999px;
+.logo-mark-shell {
+  @apply relative inline-flex h-12 w-12 items-center justify-center rounded-2xl border border-black/10 bg-card transition-all duration-300;
+  box-shadow:
+    0 14px 34px -24px rgb(0 0 0 / 0.38),
+    0 0 0 1px rgb(255 255 255 / 0.18) inset,
+    0 0 26px rgb(var(--color-signal) / 0.2);
 }
 
-.logo-wordmark-image {
-  height: 2.65rem;
-  width: auto;
+.logo-mark-shell::before {
+  content: "";
+  position: absolute;
+  inset: -0.45rem;
+  border-radius: 1.35rem;
+  background: radial-gradient(circle, rgb(var(--color-signal) / 0.22), transparent 64%);
+  filter: blur(10px);
+  opacity: 0.72;
+  transition: opacity 220ms ease, transform 220ms ease;
+  z-index: -1;
+}
+
+.logo-mark-image {
+  position: relative;
+  height: 2.45rem;
+  width: 2.45rem;
   object-fit: contain;
   filter:
-    drop-shadow(0 10px 22px rgb(0 0 0 / 0.12))
-    drop-shadow(0 0 18px rgb(var(--color-signal) / 0.2));
-  transition: transform 220ms ease, filter 220ms ease, opacity 220ms ease;
+    drop-shadow(0 0 10px rgb(var(--color-signal) / 0.28))
+    drop-shadow(0 7px 14px rgb(0 0 0 / 0.14));
+  transition: transform 220ms ease, filter 220ms ease;
+}
+
+.brand-title {
+  font-size: 1.4rem;
+  line-height: 1;
+  font-weight: 500;
+  color: rgb(var(--color-ink));
+  text-shadow:
+    0 1px 0 rgb(255 255 255 / 0.32),
+    0 0 16px rgb(var(--color-signal) / 0.1);
+  transition: color 220ms ease, text-shadow 220ms ease, transform 220ms ease;
+}
+
+.brand-title span {
+  font-weight: 800;
+  color: rgb(var(--color-ink));
 }
 
 .brand-link:hover::before {
-  opacity: 0.92;
+  opacity: 0.82;
   transform: scale(1);
 }
 
-.brand-link:hover .logo-wordmark-image {
-  transform: translateY(-0.5px);
+.brand-link:hover .logo-mark-shell {
+  transform: translateY(-1px);
+  border-color: rgb(var(--color-signal) / 0.28);
+}
+
+.brand-link:hover .logo-mark-shell::before {
+  opacity: 1;
+  transform: scale(1.08);
+}
+
+.brand-link:hover .logo-mark-image {
+  transform: scale(1.04);
   filter:
-    drop-shadow(0 14px 26px rgb(0 0 0 / 0.14))
-    drop-shadow(0 0 24px rgb(var(--color-signal) / 0.3));
+    drop-shadow(0 0 14px rgb(var(--color-signal) / 0.38))
+    drop-shadow(0 8px 16px rgb(0 0 0 / 0.18));
+}
+
+.brand-link:hover .brand-title {
+  transform: translateY(-0.5px);
+  text-shadow:
+    0 1px 0 rgb(255 255 255 / 0.36),
+    0 0 20px rgb(var(--color-signal) / 0.18);
 }
 
 .nav-link {
@@ -203,10 +345,50 @@ button, input, textarea, select {
   box-shadow: 0 12px 30px -22px rgb(0 0 0 / 0.9);
 }
 
-.dark .logo-wordmark-image {
+.dark .metric-card,
+.dark .dashboard-chart-card {
+  background:
+    linear-gradient(180deg, rgb(18 26 29 / 0.96), rgb(13 20 22 / 0.98));
+}
+
+.dark .brand-link::before {
+  background:
+    radial-gradient(circle at 17% 50%, rgb(var(--color-signal) / 0.36), transparent 32%),
+    linear-gradient(90deg, rgb(var(--color-signal) / 0.15), transparent 70%);
+  opacity: 0.64;
+  filter: blur(18px);
+}
+
+.dark .logo-mark-shell {
+  background:
+    linear-gradient(180deg, rgb(19 29 32 / 0.98), rgb(10 17 19 / 0.98));
+  border-color: rgb(var(--color-signal) / 0.14);
+  box-shadow:
+    0 18px 36px -22px rgb(0 0 0 / 0.82),
+    0 0 0 1px rgb(255 255 255 / 0.08) inset,
+    0 0 34px rgb(var(--color-signal) / 0.28);
+}
+
+.dark .logo-mark-shell::before {
+  background: radial-gradient(circle, rgb(var(--color-signal) / 0.32), transparent 66%);
+  opacity: 0.86;
+}
+
+.dark .logo-mark-image {
   filter:
-    drop-shadow(0 12px 24px rgb(0 0 0 / 0.3))
-    drop-shadow(0 0 24px rgb(var(--color-signal) / 0.28));
+    drop-shadow(0 0 16px rgb(var(--color-signal) / 0.46))
+    drop-shadow(0 8px 16px rgb(0 0 0 / 0.42));
+}
+
+.dark .brand-title {
+  color: rgb(231 242 238);
+  text-shadow:
+    0 0 16px rgb(var(--color-signal) / 0.18),
+    0 10px 24px rgb(0 0 0 / 0.3);
+}
+
+.dark .brand-title span {
+  color: rgb(246 255 252);
 }
 
 .dark input,
