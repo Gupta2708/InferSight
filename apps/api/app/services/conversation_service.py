@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from uuid import UUID
 
-from sqlalchemy import desc
+from sqlalchemy import desc, func
 from sqlalchemy.orm import Session, selectinload
 
 from app.db import models
@@ -26,25 +26,27 @@ class ConversationService:
             raise
 
     def list(self) -> list[models.Conversation]:
+        activity_time = func.coalesce(
+            models.Conversation.last_message_at,
+            models.Conversation.updated_at,
+            models.Conversation.created_at,
+        )
         return (
             self.db.query(models.Conversation)
-            .order_by(
-                desc(models.Conversation.last_message_at.isnot(None)),
-                desc(models.Conversation.last_message_at),
-                desc(models.Conversation.created_at),
-            )
+            .order_by(desc(activity_time), desc(models.Conversation.created_at))
             .all()
         )
 
     def list_summaries(self) -> list[dict]:
+        activity_time = func.coalesce(
+            models.Conversation.last_message_at,
+            models.Conversation.updated_at,
+            models.Conversation.created_at,
+        )
         conversations = (
             self.db.query(models.Conversation)
             .options(selectinload(models.Conversation.messages))
-            .order_by(
-                desc(models.Conversation.last_message_at.isnot(None)),
-                desc(models.Conversation.last_message_at),
-                desc(models.Conversation.created_at),
-            )
+            .order_by(desc(activity_time), desc(models.Conversation.created_at))
             .all()
         )
         summaries = []

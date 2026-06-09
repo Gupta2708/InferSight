@@ -25,6 +25,7 @@ export function ChatConsole() {
   const [error, setError] = useState("");
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
   const messagePanelRef = useRef<HTMLDivElement | null>(null);
+  const conversationListRef = useRef<HTMLDivElement | null>(null);
 
   async function refresh(preferredId = active?.id) {
     const list = await api<Conversation[]>("/api/conversations");
@@ -60,11 +61,7 @@ export function ChatConsole() {
     }
   }, [models, provider, model]);
 
-  const visibleConversations = useMemo(() => {
-    if (!active) return conversations;
-    const activeSummary = conversations.find((item) => item.id === active.id) || active;
-    return [activeSummary, ...conversations.filter((item) => item.id !== active.id)];
-  }, [active, conversations]);
+  const visibleConversations = conversations;
 
   async function createConversation(): Promise<Conversation | null> {
     try {
@@ -75,6 +72,7 @@ export function ChatConsole() {
       });
       setActive(conversation);
       setConversations((current) => [conversation, ...current.filter((item) => item.id !== conversation.id)]);
+      conversationListRef.current?.scrollTo({ top: 0 });
       messagePanelRef.current?.scrollTo({ top: 0 });
       requestAnimationFrame(() => inputRef.current?.focus());
       await refresh(conversation.id);
@@ -199,7 +197,7 @@ export function ChatConsole() {
             <Button onClick={createConversation} className="h-10 px-3">New</Button>
           </div>
         </div>
-        <div className="min-h-0 flex-1 overflow-auto">
+        <div ref={conversationListRef} className="min-h-0 flex-1 overflow-auto">
           {visibleConversations.map((conversation) => (
             <button
               key={conversation.id}
